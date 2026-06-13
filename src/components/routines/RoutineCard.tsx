@@ -22,19 +22,15 @@ export function RoutineCard({ routine, onDuplicate, onDelete, onExport }: Routin
         onClick={() => void navigate(`/rutinas/${routine.id}`)}
         type="button"
       >
-        <div className="aspect-[5/4] w-full bg-neutral-100">
-          {coverUrl ? (
+        {coverUrl ? (
+          <div className="aspect-[5/4] w-full bg-neutral-100">
             <img
               alt=""
               className="h-full w-full object-cover"
               src={coverUrl}
             />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-5xl text-neutral-300">
-              +
-            </div>
-          )}
-        </div>
+          </div>
+        ) : null}
         <div className="grid gap-2 p-4">
           <h2 className="text-xl font-semibold">{routine.title}</h2>
           <p className="line-clamp-2 min-h-12 text-sm text-neutral-700">
