@@ -7,6 +7,7 @@ import {
   discardWorkoutSession,
   finishWorkoutSession,
   getActiveWorkoutSession,
+  getExerciseHistory,
   getWorkoutSetLogs,
   getWorkoutTimedLogs,
   pauseWorkoutTimedLogTimer,
@@ -191,5 +192,53 @@ describe("workoutRepository", () => {
     expect(finishedSession?.finished_at).toBeTruthy();
     expect(finishedSession?.duration_seconds).toBeGreaterThanOrEqual(0);
     await expect(getActiveWorkoutSession(profile.id)).resolves.toBeUndefined();
+  });
+
+  it("calcula histórico usando el mayor peso completado por sesión finalizada", async () => {
+    const { profile, routine, setsExercise } = await createWorkoutFixture();
+    const firstSession = await startWorkoutSession(routine.id, profile.id);
+    const firstLogs = await getWorkoutSetLogs(firstSession.id, setsExercise.id);
+
+    await saveWorkoutSetLog(firstLogs[0].id, {
+      weight: 40,
+      completed: true
+    });
+    await saveWorkoutSetLog(firstLogs[1].id, {
+      weight: 45,
+      completed: true
+    });
+    await finishWorkoutSession(firstSession.id);
+
+    const secondSession = await startWorkoutSession(routine.id, profile.id);
+    const secondLogs = await getWorkoutSetLogs(secondSession.id, setsExercise.id);
+
+    await saveWorkoutSetLog(secondLogs[0].id, {
+      weight: 50,
+      completed: false
+    });
+    await saveWorkoutSetLog(secondLogs[1].id, {
+      weight: 47.5,
+      completed: true
+    });
+    await finishWorkoutSession(secondSession.id);
+
+    const activeSession = await startWorkoutSession(routine.id, profile.id);
+    const activeLogs = await getWorkoutSetLogs(activeSession.id, setsExercise.id);
+
+    await saveWorkoutSetLog(activeLogs[0].id, {
+      weight: 100,
+      completed: true
+    });
+
+    await expect(getExerciseHistory(setsExercise.id)).resolves.toMatchObject([
+      {
+        session_id: firstSession.id,
+        weight: 45
+      },
+      {
+        session_id: secondSession.id,
+        weight: 47.5
+      }
+    ]);
   });
 });

@@ -9,6 +9,12 @@ import {
 } from "./exerciseRepository";
 import { localDb } from "./localDb";
 
+export type ExerciseHistoryPoint = {
+  session_id: string;
+  date: string;
+  weight: number;
+};
+
 export async function startWorkoutSession(routineId: string, profileId: string) {
   const activeSession = await getActiveWorkoutSession(profileId);
 
@@ -290,4 +296,50 @@ export async function getWorkoutSessionsByProfile(profileId: string) {
     .where("[profile_id+started_at]")
     .between([profileId, Dexie.minKey], [profileId, Dexie.maxKey])
     .toArray();
+}
+
+export async function getExerciseHistory(exerciseId: string) {
+  const logs = await localDb.workout_set_logs
+    .where("exercise_id")
+    .equals(exerciseId)
+    .and((log) => log.completed)
+    .toArray();
+
+  if (logs.length === 0) {
+    return [];
+  }
+
+  const sessionIds = Array.from(new Set(logs.map((log) => log.session_id)));
+  const sessions = await localDb.workout_sessions.bulkGet(sessionIds);
+  const finishedSessions = new Map(
+    sessions
+      .filter((session): session is WorkoutSession => Boolean(session))
+      .filter((session) => session.status === "finished")
+      .map((session) => [session.id, session])
+  );
+  const maxWeightBySession = new Map<string, number>();
+
+  for (const log of logs) {
+    if (!finishedSessions.has(log.session_id)) {
+      continue;
+    }
+
+    const currentMax = maxWeightBySession.get(log.session_id);
+
+    if (currentMax === undefined || log.weight > currentMax) {
+      maxWeightBySession.set(log.session_id, log.weight);
+    }
+  }
+
+  return Array.from(maxWeightBySession.entries())
+    .map(([sessionId, weight]): ExerciseHistoryPoint => {
+      const session = finishedSessions.get(sessionId);
+
+      return {
+        session_id: sessionId,
+        date: session?.finished_at ?? session?.started_at ?? "",
+        weight
+      };
+    })
+    .sort((first, second) => first.date.localeCompare(second.date));
 }

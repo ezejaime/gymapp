@@ -3,6 +3,7 @@ import { useActiveProfile } from "../hooks/useActiveProfile";
 import { ActiveRoutinePage } from "../pages/ActiveRoutinePage";
 import { ExerciseDetailPage } from "../pages/ExerciseDetailPage";
 import { ExerciseEditPage } from "../pages/ExerciseEditPage";
+import { ExerciseHistoryPage } from "../pages/ExerciseHistoryPage";
 import { NewExercisePage } from "../pages/NewExercisePage";
 import { NewRoutinePage } from "../pages/NewRoutinePage";
 import { ProfilesPage } from "../pages/ProfilesPage";
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
           {
             path: "/ejercicios/:exerciseId/editar",
             element: <ExerciseEditPage />
+          },
+          {
+            path: "/ejercicios/:exerciseId/historico",
+            element: <ExerciseHistoryPage />
           }
         ]
       }

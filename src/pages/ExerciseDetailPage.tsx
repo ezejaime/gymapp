@@ -110,6 +110,15 @@ export function ExerciseDetailPage() {
       <Button onClick={() => void navigate(`/ejercicios/${exercise.id}/editar`)}>
         Editar ejercicio
       </Button>
+
+      {exercise.type === "sets" ? (
+        <Button
+          onClick={() => void navigate(`/ejercicios/${exercise.id}/historico`)}
+          variant="secondary"
+        >
+          Histórico
+        </Button>
+      ) : null}
     </section>
   );
 }

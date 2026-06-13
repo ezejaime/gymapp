@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import type { Exercise, WorkoutSetLog, WorkoutTimedLog } from "../../types";
 import { exerciseCategoryLabels, exerciseTypeLabels } from "../../utils/exerciseLabels";
 import { SetTracker } from "./SetTracker";
@@ -30,6 +31,8 @@ export function ActiveWorkout({
   onPauseTimedLog,
   onResetTimedLog
 }: ActiveWorkoutProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="grid gap-4">
       {exercises.map((exercise) => {
@@ -51,6 +54,17 @@ export function ActiveWorkout({
                 {exerciseTypeLabels[exercise.type]}
               </p>
               <h2 className="text-xl font-semibold">{exercise.name}</h2>
+              {exercise.type === "sets" ? (
+                <button
+                  className="self-start text-sm font-semibold text-neutral-700"
+                  onClick={() =>
+                    void navigate(`/ejercicios/${exercise.id}/historico`)
+                  }
+                  type="button"
+                >
+                  Histórico
+                </button>
+              ) : null}
             </header>
 
             {exercise.type === "sets" ? (
