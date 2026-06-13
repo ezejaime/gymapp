@@ -1,4 +1,4 @@
-export type { BackupData } from "./backup";
+export type { BackupData, BackupRoutineImage } from "./backup";
 export type {
   Exercise,
   ExerciseCategory,

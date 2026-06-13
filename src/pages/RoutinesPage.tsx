@@ -47,9 +47,14 @@ export function RoutinesPage() {
           </p>
           <h1 className="text-3xl font-semibold">Mis rutinas</h1>
         </div>
-        <Button onClick={handleChangeProfile} variant="ghost">
-          Cambiar
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button onClick={() => void navigate("/ajustes")} variant="ghost">
+            Ajustes
+          </Button>
+          <Button onClick={handleChangeProfile} variant="ghost">
+            Cambiar
+          </Button>
+        </div>
       </header>
 
       {activeSession ? (

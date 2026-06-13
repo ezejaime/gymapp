@@ -10,6 +10,7 @@ import { ProfilesPage } from "../pages/ProfilesPage";
 import { RoutineDetailPage } from "../pages/RoutineDetailPage";
 import { RoutineEditPage } from "../pages/RoutineEditPage";
 import { RoutinesPage } from "../pages/RoutinesPage";
+import { SettingsPage } from "../pages/SettingsPage";
 
 function RootLayout() {
   return (
@@ -63,6 +64,10 @@ export const router = createBrowserRouter([
           {
             path: "/rutinas",
             element: <RoutinesPage />
+          },
+          {
+            path: "/ajustes",
+            element: <SettingsPage />
           },
           {
             path: "/rutinas/nueva",
