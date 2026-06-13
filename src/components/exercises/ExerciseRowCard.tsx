@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import type { Exercise, SetsExerciseConfig, TimedExerciseConfig } from "../../types";
 import { exerciseTypeLabels } from "../../utils/exerciseLabels";
+import { getYoutubeThumbnailUrl } from "../../utils/video";
 import { Button } from "../ui/Button";
 
 type ExerciseRowCardProps = {
@@ -48,17 +49,23 @@ export function ExerciseRowCard({
           onClick={() => void navigate(`/ejercicios/${exercise.id}`)}
           type="button"
         >
-          {exercise.video_thumbnail_url ? (
-            <img
-              alt=""
-              className="h-full w-full object-cover"
-              src={exercise.video_thumbnail_url}
-            />
-          ) : (
-            <span className="flex h-full items-center justify-center text-2xl text-neutral-300">
-              +
-            </span>
-          )}
+          {(() => {
+            const thumbSrc =
+              exercise.video_thumbnail_url ??
+              getYoutubeThumbnailUrl(exercise.video_url);
+
+            return thumbSrc ? (
+              <img
+                alt=""
+                className="h-full w-full object-cover"
+                src={thumbSrc}
+              />
+            ) : (
+              <span className="flex h-full items-center justify-center text-2xl text-neutral-300">
+                +
+              </span>
+            );
+          })()}
         </button>
 
         <div className="min-w-0 flex-1">

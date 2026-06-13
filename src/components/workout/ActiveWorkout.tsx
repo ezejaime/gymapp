@@ -5,6 +5,7 @@ import {
   exerciseCategoryOrder,
   exerciseTypeLabels
 } from "../../utils/exerciseLabels";
+import { getYoutubeEmbedUrl } from "../../utils/video";
 import { SetTracker } from "./SetTracker";
 import { TimerExercise } from "./TimerExercise";
 
@@ -86,6 +87,19 @@ export function ActiveWorkout({
                 </button>
               ) : null}
             </header>
+
+            {(() => {
+              const embedUrl = getYoutubeEmbedUrl(exercise.video_url);
+              return embedUrl ? (
+                <iframe
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="aspect-video w-full rounded-lg border border-neutral-200"
+                  src={embedUrl}
+                  title={exercise.name}
+                />
+              ) : null;
+            })()}
 
             {exercise.type === "sets" ? (
               <SetTracker logs={exerciseSetLogs} onUpdate={onUpdateSetLog} />
