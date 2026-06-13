@@ -8,9 +8,10 @@ type RoutineCardProps = {
   routine: Routine;
   onDuplicate: (routineId: string) => void;
   onDelete: (routine: Routine) => void;
+  onExport: (routineId: string) => void;
 };
 
-export function RoutineCard({ routine, onDuplicate, onDelete }: RoutineCardProps) {
+export function RoutineCard({ routine, onDuplicate, onDelete, onExport }: RoutineCardProps) {
   const navigate = useNavigate();
   const coverUrl = useRoutineImageUrl(routine.cover_image_blob_id);
 
@@ -51,6 +52,9 @@ export function RoutineCard({ routine, onDuplicate, onDelete }: RoutineCardProps
         </Button>
         <Button onClick={() => onDuplicate(routine.id)} variant="secondary">
           Duplicar
+        </Button>
+        <Button onClick={() => onExport(routine.id)} variant="secondary">
+          Exportar
         </Button>
         <Button onClick={() => onDelete(routine)} variant="secondary">
           Eliminar
