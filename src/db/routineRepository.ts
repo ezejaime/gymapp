@@ -1,6 +1,8 @@
 import Dexie from "dexie";
 import type {
   Exercise,
+  ExerciseCategory,
+  ExerciseType,
   Routine,
   RoutineImage,
   SetsExerciseConfig,
@@ -187,6 +189,349 @@ export async function duplicateRoutine(routineId: string) {
   );
 
   return duplicatedRoutine;
+}
+
+export type ImportedExerciseJson = {
+  name: string;
+  short_description?: string;
+  full_description?: string;
+  video_url?: string;
+  video_thumbnail_url?: string;
+  category: ExerciseCategory;
+  type: ExerciseType;
+  sets_config?: { sets: number; reps: number; base_weight: number };
+  timed_config?: {
+    work_seconds: number;
+    rest_seconds: number;
+    rounds: number;
+  };
+};
+
+export type ImportedRoutineJson = {
+  title: string;
+  description?: string;
+  exercises?: ImportedExerciseJson[];
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseImportedRoutine(value: unknown): ImportedRoutineJson {
+  if (!isRecord(value)) {
+    throw new Error("El JSON no tiene el formato esperado.");
+  }
+
+  if (typeof value.title !== "string" || !value.title.trim()) {
+    throw new Error("El JSON debe incluir un 'title'.");
+  }
+
+  const result: ImportedRoutineJson = {
+    title: value.title,
+    description:
+      typeof value.description === "string" ? value.description : undefined
+  };
+
+  if (value.exercises !== undefined) {
+    if (!Array.isArray(value.exercises)) {
+      throw new Error("'exercises' debe ser un array.");
+    }
+
+    result.exercises = value.exercises.map((ex: unknown, index: number) => {
+      if (!isRecord(ex)) {
+        throw new Error(`El ejercicio ${index + 1} no tiene formato válido.`);
+      }
+
+      if (typeof ex.name !== "string" || !ex.name.trim()) {
+        throw new Error(
+          `El ejercicio ${index + 1} debe tener un 'name'.`
+        );
+      }
+
+      const category = ex.category;
+      if (category !== "warmup" && category !== "core" && category !== "strength") {
+        throw new Error(
+          `El ejercicio "${ex.name}" tiene una categoría inválida. Usá: warmup, core o strength.`
+        );
+      }
+
+      const type = ex.type;
+      if (type !== "sets" && type !== "timed") {
+        throw new Error(
+          `El ejercicio "${ex.name}" tiene un tipo inválido. Usá: sets o timed.`
+        );
+      }
+
+      const parsed: ImportedExerciseJson = {
+        name: ex.name,
+        short_description:
+          typeof ex.short_description === "string"
+            ? ex.short_description
+            : "",
+        full_description:
+          typeof ex.full_description === "string" ? ex.full_description : "",
+        video_url:
+          typeof ex.video_url === "string" && ex.video_url
+            ? ex.video_url
+            : undefined,
+        video_thumbnail_url:
+          typeof ex.video_thumbnail_url === "string" && ex.video_thumbnail_url
+            ? ex.video_thumbnail_url
+            : undefined,
+        category,
+        type
+      };
+
+      if (type === "sets") {
+        const config = ex.sets_config;
+        if (!isRecord(config)) {
+          throw new Error(
+            `El ejercicio "${ex.name}" es tipo sets pero falta 'sets_config'.`
+          );
+        }
+
+        parsed.sets_config = {
+          sets:
+            typeof config.sets === "number" ? config.sets : Number(config.sets),
+          reps:
+            typeof config.reps === "number" ? config.reps : Number(config.reps),
+          base_weight:
+            typeof config.base_weight === "number"
+              ? config.base_weight
+              : Number(config.base_weight)
+        };
+      }
+
+      if (type === "timed") {
+        const config = ex.timed_config;
+        if (!isRecord(config)) {
+          throw new Error(
+            `El ejercicio "${ex.name}" es tipo timed pero falta 'timed_config'.`
+          );
+        }
+
+        parsed.timed_config = {
+          work_seconds:
+            typeof config.work_seconds === "number"
+              ? config.work_seconds
+              : Number(config.work_seconds),
+          rest_seconds:
+            typeof config.rest_seconds === "number"
+              ? config.rest_seconds
+              : Number(config.rest_seconds),
+          rounds:
+            typeof config.rounds === "number"
+              ? config.rounds
+              : Number(config.rounds)
+        };
+      }
+
+      return parsed;
+    });
+  }
+
+  return result;
+}
+
+function tryExtractFromBackupFormat(
+  value: Record<string, unknown>
+): ImportedRoutineJson | undefined {
+  const routines = value.routines;
+  const exercises = value.exercises;
+  const setsConfigs = value.sets_exercise_config;
+  const timedConfigs = value.timed_exercise_config;
+
+  if (!Array.isArray(routines) || routines.length === 0) {
+    return undefined;
+  }
+
+  const routine = routines[0];
+  if (!isRecord(routine) || typeof routine.title !== "string") {
+    return undefined;
+  }
+
+  const result: ImportedRoutineJson = {
+    title: routine.title,
+    description:
+      typeof routine.description === "string" ? routine.description : undefined
+  };
+
+  const routineId = routine.id;
+  if (typeof routineId === "string" && Array.isArray(exercises)) {
+    const routineExercises = exercises.filter(
+      (ex: unknown) =>
+        isRecord(ex) && (ex as Record<string, unknown>).routine_id === routineId
+    );
+
+    if (routineExercises.length > 0) {
+      result.exercises = routineExercises.map((ex: unknown) => {
+        const exercise = ex as Record<string, unknown>;
+        const imported: ImportedExerciseJson = {
+          name: String(exercise.name ?? ""),
+          short_description: String(exercise.short_description ?? ""),
+          full_description: String(exercise.full_description ?? ""),
+          video_url:
+            typeof exercise.video_url === "string" && exercise.video_url
+              ? exercise.video_url
+              : undefined,
+          video_thumbnail_url:
+            typeof exercise.video_thumbnail_url === "string" &&
+            exercise.video_thumbnail_url
+              ? exercise.video_thumbnail_url
+              : undefined,
+          category: exercise.category as ImportedExerciseJson["category"],
+          type: exercise.type as ImportedExerciseJson["type"]
+        };
+
+        const exerciseId = exercise.id;
+        if (
+          imported.type === "sets" &&
+          typeof exerciseId === "string" &&
+          Array.isArray(setsConfigs)
+        ) {
+          const config = setsConfigs.find(
+            (c: unknown) =>
+              isRecord(c) &&
+              (c as Record<string, unknown>).exercise_id === exerciseId
+          ) as Record<string, unknown> | undefined;
+
+          if (config) {
+            imported.sets_config = {
+              sets: Number(config.sets ?? 0),
+              reps: Number(config.reps ?? 0),
+              base_weight: Number(config.base_weight ?? 0)
+            };
+          }
+        }
+
+        if (
+          imported.type === "timed" &&
+          typeof exerciseId === "string" &&
+          Array.isArray(timedConfigs)
+        ) {
+          const config = timedConfigs.find(
+            (c: unknown) =>
+              isRecord(c) &&
+              (c as Record<string, unknown>).exercise_id === exerciseId
+          ) as Record<string, unknown> | undefined;
+
+          if (config) {
+            imported.timed_config = {
+              work_seconds: Number(config.work_seconds ?? 0),
+              rest_seconds: Number(config.rest_seconds ?? 0),
+              rounds: Number(config.rounds ?? 0)
+            };
+          }
+        }
+
+        return imported;
+      });
+    }
+  }
+
+  return result;
+}
+
+export function parseRoutineImportJson(json: string): ImportedRoutineJson {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error("El archivo no tiene formato JSON válido.");
+  }
+
+  if (!isRecord(parsed)) {
+    throw new Error("El JSON debe ser un objeto.");
+  }
+
+  // Try simple format first
+  if (
+    typeof parsed.title === "string" &&
+    parsed.title.trim()
+  ) {
+    return parseImportedRoutine(parsed);
+  }
+
+  // Try backup format
+  const extracted = tryExtractFromBackupFormat(parsed);
+  if (extracted) {
+    return extracted;
+  }
+
+  throw new Error(
+    "No encontramos una rutina válida en el JSON. Asegurate de que tenga al menos un 'title'."
+  );
+}
+
+export async function importRoutineFromJson(
+  profileId: string,
+  input: ImportedRoutineJson
+) {
+  const now = nowIso();
+  const routine: Routine = {
+    id: createId(),
+    profile_id: profileId,
+    title: input.title.trim(),
+    description: (input.description ?? "").trim(),
+    created_at: now,
+    updated_at: now
+  };
+
+  await localDb.transaction(
+    "rw",
+    localDb.routines,
+    localDb.exercises,
+    localDb.sets_exercise_config,
+    localDb.timed_exercise_config,
+    async () => {
+      await localDb.routines.add(routine);
+
+      if (input.exercises) {
+        for (let index = 0; index < input.exercises.length; index++) {
+          const ex = input.exercises[index];
+          const exercise: Exercise = {
+            id: createId(),
+            routine_id: routine.id,
+            profile_id: profileId,
+            name: ex.name.trim(),
+            short_description: (ex.short_description ?? "").trim(),
+            full_description: (ex.full_description ?? "").trim(),
+            video_url: ex.video_url?.trim() || undefined,
+            video_thumbnail_url: ex.video_thumbnail_url?.trim() || undefined,
+            category: ex.category,
+            type: ex.type,
+            sort_order: index,
+            created_at: now,
+            updated_at: now
+          };
+          await localDb.exercises.add(exercise);
+
+          if (ex.type === "sets" && ex.sets_config) {
+            await localDb.sets_exercise_config.add({
+              id: createId(),
+              exercise_id: exercise.id,
+              sets: ex.sets_config.sets,
+              reps: ex.sets_config.reps,
+              base_weight: ex.sets_config.base_weight
+            });
+          }
+
+          if (ex.type === "timed" && ex.timed_config) {
+            await localDb.timed_exercise_config.add({
+              id: createId(),
+              exercise_id: exercise.id,
+              work_seconds: ex.timed_config.work_seconds,
+              rest_seconds: ex.timed_config.rest_seconds,
+              rounds: ex.timed_config.rounds
+            });
+          }
+        }
+      }
+    }
+  );
+
+  return routine;
 }
 
 export async function deleteRoutine(routineId: string) {
