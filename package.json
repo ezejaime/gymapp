@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pages": "set GITHUB_PAGES=true&&tsc -b&&vite build",
+    "deploy": "set GITHUB_PAGES=true&&tsc -b&&vite build&&npx gh-pages -d dist",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
