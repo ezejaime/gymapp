@@ -186,7 +186,10 @@ export async function getWorkoutSetLogs(sessionId: string, exerciseId?: string) 
       .sortBy("set_number");
   }
 
-  return localDb.workout_set_logs.where("session_id").equals(sessionId).toArray();
+  return localDb.workout_set_logs
+    .where("session_id")
+    .equals(sessionId)
+    .sortBy("set_number");
 }
 
 export async function getWorkoutTimedLogs(sessionId: string, exerciseId?: string) {
@@ -197,7 +200,10 @@ export async function getWorkoutTimedLogs(sessionId: string, exerciseId?: string
       .sortBy("round_number");
   }
 
-  return localDb.workout_timed_logs.where("session_id").equals(sessionId).toArray();
+  return localDb.workout_timed_logs
+    .where("session_id")
+    .equals(sessionId)
+    .sortBy("round_number");
 }
 
 export async function saveWorkoutSetLog(
