@@ -48,6 +48,9 @@ export function RoutinesPage() {
           <h1 className="text-3xl font-semibold">Mis rutinas</h1>
         </div>
         <div className="flex flex-col gap-2">
+          <Button onClick={() => void navigate("/progreso")} variant="ghost">
+            Progreso
+          </Button>
           <Button onClick={() => void navigate("/ajustes")} variant="ghost">
             Ajustes
           </Button>
