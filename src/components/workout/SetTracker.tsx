@@ -15,7 +15,7 @@ export function SetTracker({ logs, onUpdate }: SetTrackerProps) {
     <div className="grid gap-2">
       {logs.map((log) => (
         <div
-          className="grid grid-cols-[1fr_1fr_1.3fr_auto] items-end gap-2 rounded-lg border border-neutral-200 p-3"
+          className="grid grid-cols-2 items-end gap-3 rounded-lg border border-neutral-200 p-3 sm:grid-cols-[1fr_1fr_1.3fr_auto]"
           key={log.id}
         >
           <div>
@@ -40,6 +40,7 @@ export function SetTracker({ logs, onUpdate }: SetTrackerProps) {
             value={log.weight}
           />
           <Button
+            className="min-w-12"
             onClick={() =>
               void onUpdate(log.id, {
                 weight: log.weight,
@@ -48,7 +49,7 @@ export function SetTracker({ logs, onUpdate }: SetTrackerProps) {
             }
             variant={log.completed ? "primary" : "secondary"}
           >
-            ✓
+            Listo
           </Button>
         </div>
       ))}

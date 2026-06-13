@@ -15,7 +15,7 @@ import { SettingsPage } from "../pages/SettingsPage";
 function RootLayout() {
   return (
     <main className="min-h-screen bg-white text-black">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-6">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))]">
         <Outlet />
       </div>
     </main>
