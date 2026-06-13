@@ -2,15 +2,20 @@ import { Navigate, useNavigate, useParams } from "react-router";
 import { CategorySection } from "../components/exercises/CategorySection";
 import { Button } from "../components/ui/Button";
 import { useExercises } from "../hooks/useExercises";
+import { useActiveProfile } from "../hooks/useActiveProfile";
 import { useRoutine } from "../hooks/useRoutine";
 import { useRoutineImageUrl } from "../hooks/useRoutineImageUrl";
+import { useActiveWorkoutSession } from "../hooks/useWorkoutSession";
 import type { Exercise } from "../types";
 import { exerciseCategoryOrder } from "../utils/exerciseLabels";
 
 export function RoutineDetailPage() {
   const navigate = useNavigate();
   const { routineId } = useParams();
+  const { activeProfile } = useActiveProfile();
   const { error, isLoading, routine } = useRoutine(routineId);
+  const { activeSession, beginWorkoutSession, discardActiveSession } =
+    useActiveWorkoutSession(activeProfile?.id);
   const {
     deleteExercise,
     error: exercisesError,
@@ -32,6 +37,8 @@ export function RoutineDetailPage() {
     return <Navigate replace to="/rutinas" />;
   }
 
+  const currentRoutine = routine;
+
   async function handleDeleteExercise(exercise: Exercise) {
     const confirmed = window.confirm(
       `¿Eliminar "${exercise.name}"? Esto no se puede deshacer.`
@@ -42,6 +49,28 @@ export function RoutineDetailPage() {
     }
 
     await deleteExercise(exercise.id);
+  }
+
+  async function handleStartWorkout() {
+    if (!activeProfile) {
+      return;
+    }
+
+    if (activeSession) {
+      const shouldDiscard = window.confirm(
+        "Ya tenés una rutina en curso. ¿Querés descartarla y empezar esta?"
+      );
+
+      if (!shouldDiscard) {
+        void navigate(`/rutinas/${activeSession.routine_id}/sesion`);
+        return;
+      }
+
+      await discardActiveSession(activeSession.id);
+    }
+
+    const session = await beginWorkoutSession(currentRoutine.id);
+    void navigate(`/rutinas/${session.routine_id}/sesion`);
   }
 
   return (
@@ -110,6 +139,10 @@ export function RoutineDetailPage() {
 
       <Button onClick={() => void navigate(`/rutinas/${routine.id}/editar`)}>
         Editar rutina
+      </Button>
+
+      <Button onClick={() => void handleStartWorkout()}>
+        Comenzar rutina
       </Button>
     </section>
   );

@@ -30,6 +30,11 @@ export type WorkoutTimedLog = {
   round_number: number;
   work_seconds: number;
   rest_seconds: number;
+  timer_status: "idle" | "running" | "paused";
+  timer_phase: "work" | "rest";
+  timer_started_at?: string;
+  timer_paused_at?: string;
+  total_paused_seconds: number;
   completed: boolean;
   created_at: string;
   updated_at: string;

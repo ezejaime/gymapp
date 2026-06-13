@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, Outlet } from "react-router";
 import { useActiveProfile } from "../hooks/useActiveProfile";
+import { ActiveRoutinePage } from "../pages/ActiveRoutinePage";
 import { ExerciseDetailPage } from "../pages/ExerciseDetailPage";
 import { ExerciseEditPage } from "../pages/ExerciseEditPage";
 import { NewExercisePage } from "../pages/NewExercisePage";
@@ -73,6 +74,10 @@ export const router = createBrowserRouter([
           {
             path: "/rutinas/:routineId/editar",
             element: <RoutineEditPage />
+          },
+          {
+            path: "/rutinas/:routineId/sesion",
+            element: <ActiveRoutinePage />
           },
           {
             path: "/rutinas/:routineId/ejercicios/nuevo",

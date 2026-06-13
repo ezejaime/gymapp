@@ -2,13 +2,18 @@ import { useNavigate } from "react-router";
 import { RoutineList } from "../components/routines/RoutineList";
 import { Button } from "../components/ui/Button";
 import { FloatingActionButton } from "../components/ui/FloatingActionButton";
+import { ActiveSessionPrompt } from "../components/workout/ActiveSessionPrompt";
 import { useActiveProfile } from "../hooks/useActiveProfile";
 import { useRoutines } from "../hooks/useRoutines";
+import { useActiveWorkoutSession } from "../hooks/useWorkoutSession";
 import type { Routine } from "../types";
 
 export function RoutinesPage() {
   const navigate = useNavigate();
   const { activeProfile, clearActiveProfile } = useActiveProfile();
+  const { activeSession, discardActiveSession } = useActiveWorkoutSession(
+    activeProfile?.id
+  );
   const { deleteRoutine, duplicateRoutine, error, isLoading, routines } =
     useRoutines(activeProfile?.id);
 
@@ -46,6 +51,13 @@ export function RoutinesPage() {
           Cambiar
         </Button>
       </header>
+
+      {activeSession ? (
+        <ActiveSessionPrompt
+          onDiscard={discardActiveSession}
+          session={activeSession}
+        />
+      ) : null}
 
       {isLoading ? <p className="text-neutral-700">Cargando rutinas...</p> : null}
       {error ? <p className="text-neutral-700">{error}</p> : null}
