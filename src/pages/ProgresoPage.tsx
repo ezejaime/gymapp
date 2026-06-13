@@ -5,6 +5,8 @@ import { useActiveProfile } from "../hooks/useActiveProfile";
 import { useProgreso } from "../hooks/useProgreso";
 import type { DayData } from "../hooks/useProgreso";
 
+const GOAL_KEY_PREFIX = "weeklyGoal_";
+
 const DAY_LABELS = ["D", "L", "M", "M", "J", "V", "S"];
 const MONTH_LABELS = [
   "Enero",
@@ -113,6 +115,63 @@ export function ProgresoPage() {
     dateKey: string;
     data: DayData;
   } | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState(() => {
+    if (!activeProfile?.id) return 3;
+    const stored = localStorage.getItem(GOAL_KEY_PREFIX + activeProfile.id);
+    return stored ? Number(stored) : 3;
+  });
+
+  function updateGoal(newGoal: number) {
+    if (!activeProfile?.id || newGoal < 1 || newGoal > 7) return;
+    setWeeklyGoal(newGoal);
+    localStorage.setItem(GOAL_KEY_PREFIX + activeProfile.id, String(newGoal));
+  }
+
+  const weeklyBreakdown = useMemo(() => {
+    if (daysByDate.size === 0) return [];
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const start = new Date(firstDay);
+    start.setDate(start.getDate() - start.getDay());
+    const end = new Date(lastDay);
+    end.setDate(end.getDate() + (6 - end.getDay()));
+    const weeks: { label: string; trained: number; goal: number }[] = [];
+    let weekStart = new Date(start);
+    let weekCounter = 0;
+
+    while (weekStart <= end) {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      if (weekStart > lastDay || weekEnd < firstDay) {
+        weekStart.setDate(weekStart.getDate() + 7);
+        continue;
+      }
+
+      weekCounter++;
+      let trained = 0;
+      const cur = new Date(weekStart);
+      while (cur <= weekEnd && cur <= end) {
+        if (
+          cur.getMonth() === month &&
+          daysByDate.has(cur.toISOString().slice(0, 10))
+        ) {
+          trained++;
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+
+      weeks.push({
+        label: `Sem ${weekCounter}`,
+        trained,
+        goal: weeklyGoal
+      });
+      weekStart.setDate(weekStart.getDate() + 7);
+    }
+
+    return weeks;
+  }, [year, month, daysByDate, weeklyGoal]);
 
   function prevMonth() {
     if (month === 0) {
@@ -161,6 +220,33 @@ export function ProgresoPage() {
         </span>
       </div>
 
+      {/* Weekly goal */}
+      <div className="flex items-center justify-center gap-3 rounded-lg border border-neutral-200 p-3">
+        <span className="text-sm text-neutral-600">Objetivo semanal:</span>
+        <button
+          aria-label="Reducir objetivo"
+          className="flex size-8 items-center justify-center rounded-full border border-neutral-300 text-lg font-semibold hover:bg-neutral-100 disabled:opacity-30"
+          disabled={weeklyGoal <= 1}
+          onClick={() => updateGoal(weeklyGoal - 1)}
+          type="button"
+        >
+          −
+        </button>
+        <span className="min-w-8 text-center text-lg font-bold">
+          {weeklyGoal}
+        </span>
+        <button
+          aria-label="Aumentar objetivo"
+          className="flex size-8 items-center justify-center rounded-full border border-neutral-300 text-lg font-semibold hover:bg-neutral-100 disabled:opacity-30"
+          disabled={weeklyGoal >= 7}
+          onClick={() => updateGoal(weeklyGoal + 1)}
+          type="button"
+        >
+          +
+        </button>
+        <span className="text-sm text-neutral-500">días / semana</span>
+      </div>
+
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -196,6 +282,54 @@ export function ProgresoPage() {
           onDayClick={(dateKey, data) => setSelectedDay({ dateKey, data })}
           year={year}
         />
+      )}
+
+      {/* Weekly breakdown */}
+      {weeklyBreakdown.length > 0 && (
+        <div className="rounded-lg border border-neutral-200 p-4">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+            Progreso mensual
+          </h3>
+          <div className="grid gap-2">
+            {weeklyBreakdown.map((week) => {
+              const met = week.trained >= week.goal;
+              return (
+                <div
+                  className="flex items-center justify-between gap-3"
+                  key={week.label}
+                >
+                  <span className="w-12 text-xs font-medium text-neutral-500">
+                    {week.label}
+                  </span>
+                  <div className="flex flex-1 gap-1">
+                    {Array.from({ length: Math.max(week.goal, week.trained, 7) }).map(
+                      (_, i) => (
+                        <span
+                          key={i}
+                          className={`flex h-4 flex-1 rounded-sm ${
+                            i < week.trained ? "bg-green-500" : "bg-neutral-200"
+                          }`}
+                        />
+                      )
+                    )}
+                  </div>
+                  <span className="min-w-fit text-right text-xs font-medium text-neutral-600">
+                    {week.trained}/{week.goal}{" "}
+                    {met ? (
+                      <svg aria-hidden="true" className="inline size-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : (
+                      <svg aria-hidden="true" className="inline size-4 text-neutral-400" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Bottom modal */}
