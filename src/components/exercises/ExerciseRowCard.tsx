@@ -62,7 +62,7 @@ export function ExerciseRowCard({
         </button>
 
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-lg font-semibold">{exercise.name}</h3>
+          <h3 className="break-words text-lg font-semibold">{exercise.name}</h3>
           <p className="text-sm font-medium text-neutral-600">
             {exerciseTypeLabels[exercise.type]}
           </p>
@@ -75,29 +75,45 @@ export function ExerciseRowCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
+          aria-label="Subir"
           disabled={!canMoveUp}
           onClick={() => onMove(exercise.id, "up")}
           variant="secondary"
         >
-          Subir
+          <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M12 19V5m0 0l-7 7m7-7l7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </Button>
         <Button
+          aria-label="Bajar"
           disabled={!canMoveDown}
           onClick={() => onMove(exercise.id, "down")}
           variant="secondary"
         >
-          Bajar
+          <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M12 5v14m0 0l7-7m-7 7l-7-7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </Button>
         <Button
+          aria-label="Editar"
           onClick={() => void navigate(`/ejercicios/${exercise.id}/editar`)}
           variant="secondary"
         >
-          Editar
+          <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M15.232 5.232l3.536 3.536M9 11l-4 4V7a2 2 0 012-2h2m0 0l2.586-2.586a2 2 0 012.828 0L16 5m-4 4l3.536-3.536" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3 21h18" strokeLinecap="round" />
+          </svg>
         </Button>
-        <Button onClick={() => onDelete(exercise)} variant="secondary">
-          Eliminar
+        <Button
+          aria-label="Eliminar"
+          onClick={() => onDelete(exercise)}
+          variant="secondary"
+        >
+          <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </Button>
       </div>
     </article>

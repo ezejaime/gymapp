@@ -40,6 +40,7 @@ export function SetTracker({ logs, onUpdate }: SetTrackerProps) {
             value={log.weight}
           />
           <Button
+            aria-label="Listo"
             className="min-w-12"
             onClick={() =>
               void onUpdate(log.id, {
@@ -49,7 +50,9 @@ export function SetTracker({ logs, onUpdate }: SetTrackerProps) {
             }
             variant={log.completed ? "primary" : "secondary"}
           >
-            Listo
+            <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Button>
         </div>
       ))}
