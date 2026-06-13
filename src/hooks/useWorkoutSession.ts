@@ -117,41 +117,80 @@ export function useWorkoutSession(sessionId?: string) {
   const updateSetLog = useCallback(
     async (logId: string, updates: Pick<WorkoutSetLog, "weight" | "completed">) => {
       await saveWorkoutSetLog(logId, updates);
-      await refreshSession();
+      setSetLogs((prev) =>
+        prev.map((log) =>
+          log.id === logId ? { ...log, ...updates } : log
+        )
+      );
     },
-    [refreshSession]
+    []
   );
 
   const updateTimedLog = useCallback(
     async (logId: string, updates: Partial<WorkoutTimedLog>) => {
       await saveWorkoutTimedLog(logId, updates);
-      await refreshSession();
+      setTimedLogs((prev) =>
+        prev.map((log) =>
+          log.id === logId ? { ...log, ...updates } : log
+        )
+      );
     },
-    [refreshSession]
+    []
   );
 
   const startTimedLog = useCallback(
     async (logId: string) => {
       await startWorkoutTimedLogTimer(logId);
-      await refreshSession();
+      setTimedLogs((prev) =>
+        prev.map((log) =>
+          log.id === logId
+            ? {
+                ...log,
+                timer_status: "running" as const,
+                timer_started_at: log.timer_started_at ?? new Date().toISOString(),
+                timer_paused_at: undefined
+              }
+            : log
+        )
+      );
     },
-    [refreshSession]
+    []
   );
 
   const pauseTimedLog = useCallback(
     async (logId: string) => {
       await pauseWorkoutTimedLogTimer(logId);
-      await refreshSession();
+      setTimedLogs((prev) =>
+        prev.map((log) =>
+          log.id === logId
+            ? { ...log, timer_status: "paused" as const, timer_paused_at: new Date().toISOString() }
+            : log
+        )
+      );
     },
-    [refreshSession]
+    []
   );
 
   const resetTimedLog = useCallback(
     async (logId: string) => {
       await resetWorkoutTimedLogTimer(logId);
-      await refreshSession();
+      setTimedLogs((prev) =>
+        prev.map((log) =>
+          log.id === logId
+            ? {
+                ...log,
+                timer_status: "idle" as const,
+                timer_phase: "work" as const,
+                timer_started_at: undefined,
+                timer_paused_at: undefined,
+                total_paused_seconds: 0,
+                completed: false
+              }
+            : log
+        )
+      );
     },
-    [refreshSession]
+    []
   );
 
   const finishSession = useCallback(async () => {

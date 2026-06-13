@@ -83,16 +83,15 @@ export function RoutineDetailPage() {
         Volver
       </button>
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200">
-        <div className="aspect-[5/4] bg-neutral-100">
-          {coverUrl ? (
+      {coverUrl ? (
+        <div className="overflow-hidden rounded-lg border border-neutral-200">
+          <div className="aspect-[5/4] bg-neutral-100">
             <img alt="" className="h-full w-full object-cover" src={coverUrl} />
-          ) : (
-            <div className="flex h-full items-center justify-center text-5xl text-neutral-300">
-              +
-            </div>
-          )}
+          </div>
         </div>
+      ) : null}
+
+      <div className="rounded-lg border border-neutral-200">
         <div className="grid gap-3 p-4">
           <h1 className="text-3xl font-semibold">{routine.title}</h1>
           <p className="text-neutral-700">

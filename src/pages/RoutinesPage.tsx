@@ -3,6 +3,7 @@ import { RoutineList } from "../components/routines/RoutineList";
 import { Button } from "../components/ui/Button";
 import { FloatingActionButton } from "../components/ui/FloatingActionButton";
 import { ActiveSessionPrompt } from "../components/workout/ActiveSessionPrompt";
+import { exportRoutineToJson } from "../db/routineRepository";
 import { useActiveProfile } from "../hooks/useActiveProfile";
 import { useRoutines } from "../hooks/useRoutines";
 import { useActiveWorkoutSession } from "../hooks/useWorkoutSession";
@@ -38,6 +39,22 @@ export function RoutinesPage() {
     await deleteRoutine(routine.id);
   }
 
+  async function handleExportRoutine(routineId: string) {
+    try {
+      const data = await exportRoutineToJson(routineId);
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.download = `${data.title.toLowerCase().replace(/\s+/g, "-")}.json`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.alert("No pudimos exportar la rutina.");
+    }
+  }
+
   return (
     <section className="flex flex-1 flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
@@ -48,6 +65,9 @@ export function RoutinesPage() {
           <h1 className="text-3xl font-semibold">Mis rutinas</h1>
         </div>
         <div className="flex flex-col gap-2">
+          <Button onClick={() => void navigate("/progreso")} variant="ghost">
+            Progreso
+          </Button>
           <Button onClick={() => void navigate("/ajustes")} variant="ghost">
             Ajustes
           </Button>
@@ -77,6 +97,7 @@ export function RoutinesPage() {
           <RoutineList
             onDelete={(routine) => void handleDeleteRoutine(routine)}
             onDuplicate={(routineId) => void handleDuplicateRoutine(routineId)}
+            onExport={(routineId) => void handleExportRoutine(routineId)}
             routines={routines}
           />
         </div>
@@ -86,6 +107,7 @@ export function RoutinesPage() {
         <RoutineList
           onDelete={(routine) => void handleDeleteRoutine(routine)}
           onDuplicate={(routineId) => void handleDuplicateRoutine(routineId)}
+          onExport={(routineId) => void handleExportRoutine(routineId)}
           routines={routines}
         />
       ) : null}

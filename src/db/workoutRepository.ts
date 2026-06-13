@@ -96,6 +96,37 @@ export async function startWorkoutSession(routineId: string, profileId: string) 
   return session;
 }
 
+export async function getFinishedSessionsByProfile(profileId: string) {
+  return (
+    await localDb.workout_sessions
+      .where("profile_id")
+      .equals(profileId)
+      .and((session) => session.status === "finished")
+      .toArray()
+  ).sort(
+    (a, b) =>
+      new Date(b.finished_at ?? b.started_at).getTime() -
+      new Date(a.finished_at ?? a.started_at).getTime()
+  );
+}
+
+export async function getSessionCompletion(sessionId: string) {
+  const [setLogs, timedLogs] = await Promise.all([
+    localDb.workout_set_logs.where("session_id").equals(sessionId).toArray(),
+    localDb.workout_timed_logs.where("session_id").equals(sessionId).toArray()
+  ]);
+
+  const allLogs = [...setLogs, ...timedLogs];
+  const total = allLogs.length;
+  const completed = allLogs.filter((log) => log.completed).length;
+
+  return {
+    total,
+    completed,
+    percent: total > 0 ? Math.round((completed / total) * 100) : 0
+  };
+}
+
 export async function getActiveWorkoutSession(profileId: string) {
   return localDb.workout_sessions
     .where("profile_id")
@@ -155,7 +186,10 @@ export async function getWorkoutSetLogs(sessionId: string, exerciseId?: string) 
       .sortBy("set_number");
   }
 
-  return localDb.workout_set_logs.where("session_id").equals(sessionId).toArray();
+  return localDb.workout_set_logs
+    .where("session_id")
+    .equals(sessionId)
+    .sortBy("set_number");
 }
 
 export async function getWorkoutTimedLogs(sessionId: string, exerciseId?: string) {
@@ -166,7 +200,10 @@ export async function getWorkoutTimedLogs(sessionId: string, exerciseId?: string
       .sortBy("round_number");
   }
 
-  return localDb.workout_timed_logs.where("session_id").equals(sessionId).toArray();
+  return localDb.workout_timed_logs
+    .where("session_id")
+    .equals(sessionId)
+    .sortBy("round_number");
 }
 
 export async function saveWorkoutSetLog(

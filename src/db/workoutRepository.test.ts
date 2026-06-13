@@ -8,6 +8,8 @@ import {
   finishWorkoutSession,
   getActiveWorkoutSession,
   getExerciseHistory,
+  getFinishedSessionsByProfile,
+  getSessionCompletion,
   getWorkoutSetLogs,
   getWorkoutTimedLogs,
   pauseWorkoutTimedLogTimer,
@@ -240,5 +242,41 @@ describe("workoutRepository", () => {
         weight: 47.5
       }
     ]);
+  });
+
+  it("devuelve sesiones finalizadas de un perfil", async () => {
+    const { profile, routine } = await createWorkoutFixture();
+    const session = await startWorkoutSession(routine.id, profile.id);
+    
+    await finishWorkoutSession(session.id);
+    
+    const finished = await getFinishedSessionsByProfile(profile.id);
+    
+    expect(finished).toHaveLength(1);
+    expect(finished[0].id).toBe(session.id);
+    expect(finished[0].status).toBe("finished");
+  });
+
+  it("calcula el porcentaje de completitud de una sesión", async () => {
+    const { profile, routine, setsExercise, timedExercise } =
+      await createWorkoutFixture();
+    const session = await startWorkoutSession(routine.id, profile.id);
+    const setLogs = await getWorkoutSetLogs(session.id, setsExercise.id);
+    const timedLogs = await getWorkoutTimedLogs(session.id, timedExercise.id);
+    const totalLogs = setLogs.length + timedLogs.length; // 2 sets + 2 rounds = 4
+
+    expect(totalLogs).toBe(4);
+
+    // Complete one set (25%)
+    await saveWorkoutSetLog(setLogs[0].id, { weight: 40, completed: true });
+    let completion = await getSessionCompletion(session.id);
+    expect(completion).toMatchObject({ total: 4, completed: 1, percent: 25 });
+
+    // Complete all (100%)
+    await saveWorkoutSetLog(setLogs[1].id, { weight: 45, completed: true });
+    await saveWorkoutTimedLog(timedLogs[0].id, { completed: true });
+    await saveWorkoutTimedLog(timedLogs[1].id, { completed: true });
+    completion = await getSessionCompletion(session.id);
+    expect(completion).toMatchObject({ total: 4, completed: 4, percent: 100 });
   });
 });

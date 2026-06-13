@@ -11,6 +11,11 @@ import type {
 import { nowIso } from "../utils/dates";
 import { createId } from "../utils/ids";
 import { localDb } from "./localDb";
+import {
+  getExercisesByRoutine,
+  getSetsExerciseConfig,
+  getTimedExerciseConfig
+} from "./exerciseRepository";
 
 export type RoutineFormInput = {
   title: string;
@@ -41,6 +46,63 @@ export async function getRoutinesByProfile(profileId: string) {
 
 export async function getRoutineById(routineId: string) {
   return localDb.routines.get(routineId);
+}
+
+export async function exportRoutineToJson(routineId: string) {
+  const [routine, exercises] = await Promise.all([
+    getRoutineById(routineId),
+    getExercisesByRoutine(routineId)
+  ]);
+
+  if (!routine) {
+    throw new Error("Rutina no encontrada.");
+  }
+
+  const exercisesJson: ImportedExerciseJson[] = await Promise.all(
+    exercises.map(async (exercise) => {
+      const base: ImportedExerciseJson = {
+        name: exercise.name,
+        short_description: exercise.short_description || undefined,
+        full_description: exercise.full_description || undefined,
+        video_url: exercise.video_url || undefined,
+        video_thumbnail_url: exercise.video_thumbnail_url || undefined,
+        category: exercise.category,
+        type: exercise.type
+      };
+
+      if (exercise.type === "sets") {
+        const config = await getSetsExerciseConfig(exercise.id);
+        if (config) {
+          base.sets_config = {
+            sets: config.sets,
+            reps: config.reps,
+            base_weight: config.base_weight
+          };
+        }
+      }
+
+      if (exercise.type === "timed") {
+        const config = await getTimedExerciseConfig(exercise.id);
+        if (config) {
+          base.timed_config = {
+            work_seconds: config.work_seconds,
+            rest_seconds: config.rest_seconds,
+            rounds: config.rounds
+          };
+        }
+      }
+
+      return base;
+    })
+  );
+
+  const result: ImportedRoutineJson = {
+    title: routine.title,
+    description: routine.description || undefined,
+    exercises: exercisesJson.length > 0 ? exercisesJson : undefined
+  };
+
+  return result;
 }
 
 export async function getRoutineImageById(imageId: string) {

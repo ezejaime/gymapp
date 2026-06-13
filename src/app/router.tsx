@@ -7,6 +7,7 @@ import { ExerciseHistoryPage } from "../pages/ExerciseHistoryPage";
 import { NewExercisePage } from "../pages/NewExercisePage";
 import { NewRoutinePage } from "../pages/NewRoutinePage";
 import { ProfilesPage } from "../pages/ProfilesPage";
+import { ProgresoPage } from "../pages/ProgresoPage";
 import { RoutineDetailPage } from "../pages/RoutineDetailPage";
 import { RoutineEditPage } from "../pages/RoutineEditPage";
 import { RoutinesPage } from "../pages/RoutinesPage";
@@ -64,6 +65,10 @@ export const router = createBrowserRouter([
           {
             path: "/rutinas",
             element: <RoutinesPage />
+          },
+          {
+            path: "/progreso",
+            element: <ProgresoPage />
           },
           {
             path: "/ajustes",
