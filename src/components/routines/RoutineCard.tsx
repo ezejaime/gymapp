@@ -42,7 +42,7 @@ export function RoutineCard({ routine, onDuplicate, onDelete }: RoutineCardProps
         </div>
       </button>
 
-      <div className="grid grid-cols-3 gap-2 border-t border-neutral-200 p-3">
+      <div className="flex flex-wrap gap-2 border-t border-neutral-200 p-3">
         <Button
           onClick={() => void navigate(`/rutinas/${routine.id}/editar`)}
           variant="secondary"

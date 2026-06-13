@@ -71,7 +71,7 @@ export function TimerExercise({
                 <p className="text-xs font-medium text-neutral-500">Estado</p>
                 <p className="text-base font-semibold">
                   {log.completed
-                    ? "Hecha"
+                    ? "✅"
                     : phase === "work"
                       ? "Trabajo"
                       : "Descanso"}
@@ -104,6 +104,7 @@ export function TimerExercise({
                 Reiniciar
               </Button>
               <Button
+                aria-label={log.completed ? "Hecha" : "Marcar"}
                 onClick={() =>
                   void onUpdate(log.id, {
                     completed: !log.completed,
@@ -112,7 +113,9 @@ export function TimerExercise({
                 }
                 variant={log.completed ? "primary" : "secondary"}
               >
-                {log.completed ? "Hecha" : "Marcar"}
+                <svg aria-hidden="true" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </Button>
             </div>
           </div>

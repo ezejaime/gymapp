@@ -5,24 +5,7 @@ import {
   exerciseCategoryLabels,
   exerciseTypeLabels
 } from "../utils/exerciseLabels";
-
-function getYoutubeEmbedUrl(url?: string) {
-  if (!url) {
-    return undefined;
-  }
-
-  try {
-    const parsedUrl = new URL(url);
-    const videoId =
-      parsedUrl.hostname.includes("youtu.be")
-        ? parsedUrl.pathname.slice(1)
-        : parsedUrl.searchParams.get("v");
-
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { getYoutubeEmbedUrl } from "../utils/video";
 
 export function ExerciseDetailPage() {
   const navigate = useNavigate();

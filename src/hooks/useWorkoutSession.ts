@@ -18,10 +18,12 @@ import type { WorkoutSession, WorkoutSetLog, WorkoutTimedLog } from "../types";
 export function useActiveWorkoutSession(profileId?: string) {
   const [activeSession, setActiveSession] = useState<WorkoutSession | undefined>();
   const [isLoading, setIsLoading] = useState(true);
+  const [attemptedForProfile, setAttemptedForProfile] = useState<string | undefined>();
 
   const refreshActiveSession = useCallback(async () => {
     if (!profileId) {
       setActiveSession(undefined);
+      setAttemptedForProfile(undefined);
       setIsLoading(false);
       return;
     }
@@ -30,6 +32,7 @@ export function useActiveWorkoutSession(profileId?: string) {
 
     try {
       setActiveSession(await getActiveWorkoutSession(profileId));
+      setAttemptedForProfile(profileId);
     } finally {
       setIsLoading(false);
     }
@@ -60,9 +63,16 @@ export function useActiveWorkoutSession(profileId?: string) {
     void refreshActiveSession();
   }, [refreshActiveSession]);
 
+  // isLoading stays true when a profileId is provided but we haven't
+  // completed a fetch for it yet. This prevents a race condition where
+  // profileId transitions from undefined → defined, and the component
+  // re-renders before the useEffect fires to fetch the session.
+  const isActuallyLoading =
+    isLoading || (profileId !== undefined && attemptedForProfile !== profileId);
+
   return {
     activeSession,
-    isLoading,
+    isLoading: isActuallyLoading,
     beginWorkoutSession,
     discardActiveSession,
     refreshActiveSession
@@ -74,12 +84,14 @@ export function useWorkoutSession(sessionId?: string) {
   const [setLogs, setSetLogs] = useState<WorkoutSetLog[]>([]);
   const [timedLogs, setTimedLogs] = useState<WorkoutTimedLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [attemptedForSession, setAttemptedForSession] = useState<string | undefined>();
 
   const refreshSession = useCallback(async () => {
     if (!sessionId) {
       setSession(undefined);
       setSetLogs([]);
       setTimedLogs([]);
+      setAttemptedForSession(undefined);
       setIsLoading(false);
       return;
     }
@@ -96,6 +108,7 @@ export function useWorkoutSession(sessionId?: string) {
       setSession(nextSession);
       setSetLogs(nextSetLogs);
       setTimedLogs(nextTimedLogs);
+      setAttemptedForSession(sessionId);
     } finally {
       setIsLoading(false);
     }
@@ -154,11 +167,18 @@ export function useWorkoutSession(sessionId?: string) {
     void refreshSession();
   }, [refreshSession]);
 
+  // isLoading stays true when a sessionId is provided but we haven't
+  // completed a fetch for it yet. This prevents a race condition where
+  // sessionId transitions from undefined → defined on the render before
+  // the useEffect fires.
+  const isActuallyLoading =
+    isLoading || (sessionId !== undefined && attemptedForSession !== sessionId);
+
   return {
     session,
     setLogs,
     timedLogs,
-    isLoading,
+    isLoading: isActuallyLoading,
     updateSetLog,
     updateTimedLog,
     startTimedLog,
